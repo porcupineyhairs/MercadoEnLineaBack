@@ -1,7 +1,8 @@
-from app.configs import UPLOAD_FOLDER
 import os
 
 from flask import Blueprint, send_file
+
+from app.configs import UPLOAD_FOLDER
 
 media_bp = Blueprint('media', __name__)
 

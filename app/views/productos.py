@@ -1,8 +1,10 @@
-from app.configs import UPLOAD_FOLDER
 import os
 
 from flask import Blueprint, jsonify, session, request
+from flask_jwt_extended.utils import get_jwt_identity
+from flask_jwt_extended.view_decorators import jwt_required
 
+from uuid import uuid4
 from werkzeug.exceptions import BadRequestKeyError
 from werkzeug.utils import secure_filename
 
@@ -32,62 +34,59 @@ def obtenerProducto(id):
 
 
 @productos_bp.route('/<int:id>/actualizar', methods=['PATCH'])
+@jwt_required()
 def actualizarProducto(id):
-    if 'username' in session:
-        _correo = session['username']
-        producto = Producto.query.get_or_404(id)
-        usuario = Usuario.query.filter_by(correo=_correo).first()
-        if usuario.vendedor and producto not in usuario.productos:
-            res = jsonify({'message': 'No se encontro el producto'})
-            return res
-        _json = request.form
-        _icono = request.files['icono']
-        try:
-            producto.nombre = _json['nombre']
-            producto.descripcion = _json['descripcion']
-            producto.envio = _json['envio']
-            producto.precio = _json['precio']
+    _usuario_id = get_jwt_identity()
+    producto = Producto.query.get_or_404(id)
+    usuario = Usuario.query.get_or_404(_usuario_id)
+    if usuario.vendedor and producto not in usuario.productos:
+        res = jsonify({'message': 'No se encontro el producto'})
+        return res
+    _json = request.form
+    _icono = request.files['icono']
+    try:
+        producto.nombre = _json['nombre']
+        producto.descripcion = _json['descripcion']
+        producto.envio = _json['envio']
+        producto.precio = _json['precio']
 
-            nombre_archivo_icono = secure_filename(
-                str(usuario.id)+'_'+_icono.filename)
-            ruta_icono = os.path.abspath('app/static/productos_imgs/{}'.format(nombre_archivo_icono))
-            _icono.save(ruta_icono)
-            producto.icono = nombre_archivo_icono
+        nombre_archivo_split = _icono.filename.split('.')
+        extension_archivo_icono = nombre_archivo_split[
+            len(nombre_archivo_split) - 1
+        ]
+        nuevo_nombre_icono = secure_filename(
+            f'{str(uuid4())}.{extension_archivo_icono}')
+        ruta_icono = os.path.abspath(
+            'app/static/productos_imgs/{}'.format(nuevo_nombre_icono))
+        _icono.save(ruta_icono)
+        producto.icono = nuevo_nombre_icono
 
-            db.session.commit()
+        db.session.commit()
 
-            return jsonify({'message': 'Producto actualizado exitosamente'})
-        except BadRequestKeyError:
-            res = jsonify({'message': 'Bad request - falta info'})
-            return res
-    else:
-        res = jsonify({'message': 'Desautorizado'})
-        res.status_code = 401
+        return jsonify({'message': 'Producto actualizado exitosamente'})
+    except BadRequestKeyError:
+        res = jsonify({'message': 'Bad request - falta info'})
         return res
 
 
 @productos_bp.route('/subir', methods=['POST'])
+@jwt_required()
 def subirProducto():
-    if 'username' in session:
-        _correo = session['username']
-        producto = Producto.query.get_or_404(id)
-        usuario = Usuario.query.filter_by(correo=_correo).first()
-        if  usuario.vendedor and producto not in usuario.productos:
-            res = jsonify({'message': 'No se encontro el producto'})
-            return res
-        _json = request.form
-        _icono = request.files['icono']
-        try:
-            producto.nombre = _json['nombre']
-            producto.descripcion = _json['descripcion']
-            producto.envio = _json['envio']
-            producto.precio = _json['precio']
-        except BadRequestKeyError:
-            res = jsonify({'message': 'Bad request - falta info'})
-            return res
-    else:
-        res = jsonify({'message': 'Desautorizado'})
-        res.status_code = 401
+    _usuario_id = get_jwt_identity()
+    producto = Producto.query.get_or_404(id)
+    usuario = Usuario.query.get_or_404(_usuario_id)
+    if usuario.vendedor and producto not in usuario.productos:
+        res = jsonify({'message': 'No se encontro el producto'})
+        return res
+    _json = request.form
+    _icono = request.files['icono']
+    try:
+        producto.nombre = _json['nombre']
+        producto.descripcion = _json['descripcion']
+        producto.envio = _json['envio']
+        producto.precio = _json['precio']
+    except BadRequestKeyError:
+        res = jsonify({'message': 'Bad request - falta info'})
         return res
 
 

@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, session
+from flask_jwt_extended.utils import create_access_token, set_access_cookies, unset_jwt_cookies
 
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -20,12 +21,13 @@ def login():
         _correo = _json['correo']
         _contrasena = _json['contrasena']
         if _correo and _contrasena:
-            q = Usuario.query.filter_by(correo=_correo).first()
-            if q:
-                if check_password_hash(q.contrasena, _contrasena):
-                    u = usuario_schema.dump(q)
-                    session['username'] = q.correo
-                    return jsonify({'nombre': u['nombre'], 'vendedor': u['vendedor']})
+            usuario = Usuario.query.filter_by(correo=_correo).first()
+            if usuario:
+                if check_password_hash(usuario.contrasena, _contrasena):
+                    res = jsonify({'message': 'Inicio de sesión correcto'})
+                    token = create_access_token(identity=usuario.id)
+                    set_access_cookies(res, token)
+                    return res
                 else:
                     res = jsonify({'message': 'Invalid password'})
                     res.status_code = 400
@@ -34,21 +36,17 @@ def login():
                 res = jsonify({'message': 'Usuario no encontrado'})
                 res.status_code = 404
                 return res
-
     else:
         res = jsonify({'message': 'Bad request'})
         res.status_code = 400
         return res
 
 
-@usuario_bp.route('/logout', methods=['GET'])
+@usuario_bp.route('/logout', methods=['POST'])
 def cerrarSesion():
-    if 'username' in session:
-        session.pop('username', None)
-        return jsonify({'message': 'Cerraste sesión'})
-    else:
-        res = jsonify({'message': 'No hay sesión activa'})
-        return res
+    res = jsonify({'message': 'Sesión cerrada'})
+    unset_jwt_cookies(res)
+    return res
 
 
 @usuario_bp.route('/signup', methods=['POST'])
