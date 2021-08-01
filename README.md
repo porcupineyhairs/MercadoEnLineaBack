@@ -8,6 +8,11 @@
 - SQLALCHEMY_TRACK_MODIFICATIONS
 - SECRET_KEY
 - UPLOAD*FOLDER=static/productos_imgs \_Se tiene que poner tal cual en el archivo .env*
+- MAIL_SERVER
+- MAIL_PORT
+- MAIL_USERNAME
+- MAIL_PASSWORD
+- MAIL_USE_TLS
 
 Primero se tiene que instalar el paquete `viertualenv`.
 
@@ -25,7 +30,7 @@ Y activamos el entorno:
 
 Ahora para instalar los paquetes listados en el archivo `requirements.txt` ejecutamos el siguiente comando:
 
-` py -m pip install -r requirements.txt`
+` python -m pip install -r requirements.txt`
 
 ### Para correr el proyecto.
 
