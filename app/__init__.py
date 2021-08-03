@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
+from flask_msearch import Search
 
 from app.configs import (
     JWT_ACCESS_TOKEN_EXPIRES,
@@ -49,6 +50,8 @@ def create_app():
     db.create_all(app=app)
     ma.init_app(app)
     mail.init_app(app)
+    search = Search(db=db)
+    search.init_app(app)
 
     app.register_blueprint(usuario_bp, url_prefix="/usuario")
     app.register_blueprint(productos_bp, url_prefix="/productos")

@@ -34,7 +34,7 @@ def obtenerProductos():
             for producto in productos
         ]
     )
-    return jsonify(res)
+    return res
 
 
 @productos_bp.route("/<int:id>", methods=["GET"])
@@ -48,6 +48,14 @@ def obtenerProducto(id):
         }
     )
     return res
+
+
+@productos_bp.route("/buscar", methods=["GET"])
+def buscarProducto():
+    busqueda = request.args["q"]
+    productos = Producto.query.msearch(busqueda, fields=["nombre"], limit=20).all()
+    res = productos_schema.dump(productos)
+    return jsonify(res)
 
 
 @productos_bp.route("/<int:id>/actualizar", methods=["PATCH"])
@@ -136,7 +144,6 @@ def comprarProducto(id):
         msg = Message("Hola", sender=usuario.correo, recipients=["cheo2090@gmail.com"])
         msg.body = "Hola"
         mail.send(msg)
-        print(id_usuario)
         return jsonify({"message": "Compra realizada con exito"})
     except SMTPDataError:
         res = jsonify({"message": "Estamos en servidor de prueba :v"})

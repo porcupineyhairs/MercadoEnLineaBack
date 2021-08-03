@@ -24,14 +24,19 @@ def login():
         _contrasena = _json["contrasena"]
         usuario = Usuario.query.filter_by(correo=_correo).first()
         if usuario and check_password_hash(usuario.contrasena, _contrasena):
-            token = create_access_token(identity=usuario.id)
-            res = jsonify(
-                {"message": "Inicio de sesión correcto", "token": token}
+            token = create_access_token(
+                identity=usuario.id,
+                additional_claims={
+                    "nombre": usuario.nombre,
+                    "vendedor": usuario.vendedor,
+                },
             )
+            res = jsonify({"message": "Inicio de sesión correcto", "token": token})
             return res
         else:
             res = jsonify({"message": "Correo o contraseña incorrectos"})
-            res.status_code = 404
+            res.status_code = 400
+            print(res.__dict__)
             return res
     except (KeyError, TypeError):
         res = jsonify({"message": "Bad request"})
