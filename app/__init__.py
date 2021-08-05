@@ -1,7 +1,15 @@
+#Importes de Flask.
 from flask import Flask
 from flask_cors import CORS
 from flask_msearch import Search
 
+#Importes de rutas.
+from app.views.usuario import usuario_bp
+from app.views.productos import productos_bp
+from app.views.opinion import opiniones_bp
+from app.views.media import media_bp
+
+#Importes de configuración.
 from app.configs import (
     JWT_ACCESS_TOKEN_EXPIRES,
     MAIL_PASSWORD,
@@ -14,11 +22,6 @@ from app.configs import (
     SQLALCHEMY_TRACK_MODIFICATIONS,
     UPLOAD_FOLDER,
 )
-from app.views.usuario import usuario_bp
-from app.views.productos import productos_bp
-from app.views.opinion import opiniones_bp
-from app.views.media import media_bp
-
 from app.cahce import cache
 from app.db import db
 from app.jwt import jwt
@@ -27,6 +30,7 @@ from app.marshmallow import ma
 
 
 def create_app():
+    """Función que crea la aplicación de Flask y añade sus configuraciones."""
     app = Flask(__name__)
     app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
@@ -53,9 +57,9 @@ def create_app():
     search = Search(db=db)
     search.init_app(app)
 
+    app.register_blueprint(media_bp, url_prefix="/media/")
     app.register_blueprint(usuario_bp, url_prefix="/usuario")
     app.register_blueprint(productos_bp, url_prefix="/productos")
     app.register_blueprint(opiniones_bp, url_prefix="/opiniones/")
-    app.register_blueprint(media_bp, url_prefix="/media/")
 
     return app

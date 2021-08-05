@@ -19,41 +19,57 @@ from app.schemes.producto_sch import ProductoSch
 productos_bp = Blueprint("productos", __name__)
 
 producto_schema = ProductoSch(exclude=["id_usuario"])
-productos_schema = ProductoSch(many=True, exclude=["id_usuario"])
+productos_schema = ProductoSch(many=True, exclude=["id_usuario", "opiniones"])
 
 
 @productos_bp.route("/", methods=["GET"])
 def obtenerProductos():
-    productos = Producto.query.all()
-    res = jsonify(
-        [
-            {
-                "producto": producto_schema.dump(producto),
-                "usuario": producto.usuario.nombre,
-            }
-            for producto in productos
-        ]
-    )
+    """Controlador que nos permite listar todos los productos guardados en
+    la base de datos.
+
+    Returns
+    -------
+    Response"""
+
+    productos = Producto.query.filter(Producto.vendido.is_(False)).all()
+    res = jsonify(productos_schema.dump(productos))
     return res
 
 
 @productos_bp.route("/<int:id>", methods=["GET"])
 def obtenerProducto(id):
+    """Controlador que nos permite obtener la información de un
+    producto en particular.
+    Parameters
+    ----------
+    id : int
+
+    Returns
+    -------
+    Response"""
+
     producto = Producto.query.get_or_404(id)
     producto_res = producto_schema.dump(producto)
-    res = jsonify(
-        {
-            "producto": producto_res,
-            "usuario": {"nombre": producto.usuario.nombre},
-        }
-    )
+    res = jsonify(producto_res)
     return res
 
 
 @productos_bp.route("/buscar", methods=["GET"])
 def buscarProducto():
+    """Controlador que nos permite buscar productos mediante sus nombres
+    mediante un 'query'. Regresara una lista con todos los productos
+    los cuales su 'nombre' coincida con el query.
+
+    Returns
+    -------
+    Response"""
+
     busqueda = request.args["q"]
-    productos = Producto.query.msearch(busqueda, fields=["nombre"], limit=20).all()
+    productos = (
+        Producto.query.filter(Producto.vendido.is_(False))
+        .msearch(busqueda, fields=["nombre"], limit=20)
+        .all()
+    )
     res = productos_schema.dump(productos)
     return jsonify(res)
 
@@ -61,6 +77,16 @@ def buscarProducto():
 @productos_bp.route("/<int:id>/actualizar", methods=["PATCH"])
 @jwt_required()
 def actualizarProducto(id):
+    """Controlador que nos permite actualizar la información de un
+    producto.
+    Parameters
+    ----------
+    id : int
+
+    Returns
+    -------
+    Response"""
+
     _usuario_id = get_jwt_identity()
     producto = Producto.query.get_or_404(id)
     usuario = Usuario.query.get_or_404(_usuario_id)
@@ -95,14 +121,21 @@ def actualizarProducto(id):
 @productos_bp.route("/subir", methods=["POST"])
 @jwt_required()
 def subirProducto():
-    _usuario_id = get_jwt_identity()
-    usuario = Usuario.query.get_or_404(_usuario_id)
+    """Controlador que nos permite subir la información de un producto
+    para ponerlo a la venta.
+
+    Returns
+    -------
+    Response"""
+
+    _id_usuario = get_jwt_identity()
+    usuario = Usuario.query.get_or_404(_id_usuario)
     if not usuario.vendedor:
         res = jsonify({"message": "No puede subir productos"})
         return res
-    _json = request.form
-    _icono = request.files["icono"]
     try:
+        _json = request.form
+        _icono = request.files["icono"]
         nombre = _json["nombre"]
         descripcion = _json["descripcion"]
         envio = _json["envio"]
@@ -123,6 +156,7 @@ def subirProducto():
             envio=envio,
             precio=precio,
             icono=nombre_icono,
+            vendido=False,
         )
 
         usuario.productos.append(producto)
@@ -138,12 +172,34 @@ def subirProducto():
 @productos_bp.route("/<int:id>/comprar", methods=["POST"])
 @jwt_required()
 def comprarProducto(id):
+    """Controlador que permite al usuario realizar una compra.
+    Parameters
+    ----------
+    id : int
+
+    Returns
+    -------
+    Response"""
+
     try:
         id_usuario = get_jwt_identity()
         usuario = Usuario.query.get_or_404(id_usuario)
-        msg = Message("Hola", sender=usuario.correo, recipients=["cheo2090@gmail.com"])
-        msg.body = "Hola"
+        if usuario.vendedor:
+            res = jsonify({"message": "Usted no puede comprar un producto"})
+            res.status_code = 401
+            return res
+
+        producto = Producto.query.get_or_404(id)
+        producto.vendido = True
+
+        db.session.commit()
+
+        msg = Message(
+            "Compra", sender=usuario.correo, recipients=["cheo2090@gmail.com"]
+        )
+        msg.body = f"La compra fue realizada con exito {usuario.correo}"
         mail.send(msg)
+
         return jsonify({"message": "Compra realizada con exito"})
     except SMTPDataError:
         res = jsonify({"message": "Estamos en servidor de prueba :v"})

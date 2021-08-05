@@ -1,19 +1,17 @@
-from flask_sqlalchemy import model
+from app.schemes.opinion_sch import OpinionSch
+from app.schemes.usuario_sch import UsuarioSch
 from app.marshmallow import ma
 from app.models.producto import Producto
 
 
 class ProductoSch(ma.SQLAlchemyAutoSchema):
+    """Clase que nos sirve para convertir el modelo 'Producto' en un 'dict'."""
+
     class Meta:
         model = Producto
         include_fk = True
 
-    # id = ma.auto_field()
-    # id_usuario = ma.auto_field()
-    # nombre = ma.auto_field()
-    # descripcion = ma.auto_field()
-    # envio = ma.auto_field()
-    # precio = ma.auto_field()
-    # icono = ma.auto_field()
-    # opiniones = ma.auto_field()
-    # usuario = ma.auto_field()
+    usuario = ma.Nested(
+        UsuarioSch, exclude=["contrasena", "correo", "genero", "direccion", "vendedor"]
+    )
+    opiniones = ma.List(ma.Nested(OpinionSch(exclude=["id_producto", "id_usuario"])))

@@ -9,5 +9,13 @@ media_bp = Blueprint("media", __name__)
 
 @media_bp.route("/<path:filename>", methods=["GET"])
 def obtenerImage(filename):
+    """Controlador auxiliar para poder mandar las imagenes de los productos.
+    Parameters
+    ----------
+    filename : StrPath
+    
+    Returns
+    -------
+    Response"""
     imagen = os.path.join(UPLOAD_FOLDER, filename)
     return send_file(imagen)

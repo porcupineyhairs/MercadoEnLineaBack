@@ -2,6 +2,7 @@ from flask_caching import Cache
 
 from app.configs import JWT_ACCESS_TOKEN_EXPIRES
 
+"""Varbiable global para manejo de cache."""
 cache = Cache(
     config={
         "CACHE_TYPE": "SimpleCache",

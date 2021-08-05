@@ -3,6 +3,9 @@ from app.db import db
 
 
 class Producto(db.Model):
+    """Clase que nos sirve como modelo de la tabla 'producto' que se encuentra
+    en la base de datos."""
+
     __tablename__ = "producto"
     __table_args__ = {"schema": "test_scheme"}
     __searchable__ = ["nombre"]
@@ -14,4 +17,6 @@ class Producto(db.Model):
     envio = db.Column(db.String(), nullable=False)
     precio = db.Column(db.Float, nullable=False)
     icono = db.Column(db.String(), nullable=False)
+    vendido = db.Column(db.Boolean, nullable=False)
+
     usuario = db.relationship("Usuario", backref="productos")

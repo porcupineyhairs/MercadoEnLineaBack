@@ -18,6 +18,12 @@ usuarios_schema = UsuarioSch(many=True)
 
 @usuario_bp.route("/login", methods=["POST"])
 def login():
+    """Controlador que permite al usuario iniciar sesión.
+
+    Returns
+    -------
+    Response"""
+
     try:
         _json = request.json
         _correo = _json["correo"]
@@ -47,6 +53,13 @@ def login():
 @usuario_bp.route("/logout", methods=["POST"])
 @jwt_required()
 def cerrarSesion():
+    """Controlador que es utilizado para que un usuario 'cierre sesión',
+    esto se realiza invalidando el token que uso para autenticarse.
+    
+    Returns
+    -------
+    Response"""
+
     jti = get_jwt()["jti"]
     cache.set(jti, jti)
     res = jsonify({"message": "Sesión cerrada"})
@@ -55,6 +68,12 @@ def cerrarSesion():
 
 @usuario_bp.route("/signup", methods=["POST"])
 def crearUsuario():
+    """Controlador que sirve para poder registrar a nuevos usuarios.
+    
+    Returns
+    -------
+    Response"""
+
     try:
         _json = request.json
 
