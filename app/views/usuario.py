@@ -1,5 +1,7 @@
+from app.schemes.producto_sch import ProductoSch
+from app.models.producto import Producto
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended.utils import create_access_token, get_jwt
+from flask_jwt_extended.utils import create_access_token, get_jwt, get_jwt_identity
 from flask_jwt_extended.view_decorators import jwt_required
 
 from sqlalchemy.exc import IntegrityError
@@ -12,8 +14,9 @@ from app.schemes.usuario_sch import UsuarioSch
 
 usuario_bp = Blueprint("usuario", __name__)
 
-usuario_schema = UsuarioSch()
-usuarios_schema = UsuarioSch(many=True)
+usuario_schema = UsuarioSch(exclude=["contrasena"])
+usuarios_schema = UsuarioSch(many=True, exclude=["contrasena"])
+productos_schema = ProductoSch(many=True, exclude=["usuario", "id_usuario"])
 
 
 @usuario_bp.route("/login", methods=["POST"])
@@ -42,7 +45,6 @@ def login():
         else:
             res = jsonify({"message": "Correo o contraseña incorrectos"})
             res.status_code = 400
-            print(res.__dict__)
             return res
     except (KeyError, TypeError):
         res = jsonify({"message": "Bad request"})
@@ -55,7 +57,7 @@ def login():
 def cerrarSesion():
     """Controlador que es utilizado para que un usuario 'cierre sesión',
     esto se realiza invalidando el token que uso para autenticarse.
-    
+
     Returns
     -------
     Response"""
@@ -69,7 +71,7 @@ def cerrarSesion():
 @usuario_bp.route("/signup", methods=["POST"])
 def crearUsuario():
     """Controlador que sirve para poder registrar a nuevos usuarios.
-    
+
     Returns
     -------
     Response"""
@@ -78,6 +80,7 @@ def crearUsuario():
         _json = request.json
 
         _correo = _json["correo"]
+        print(_correo)
         _contrasena = _json["contrasena"]
         _vendedor = _json["vendedor"]
         _nombre = _json["nombre"]
@@ -102,4 +105,17 @@ def crearUsuario():
         return res
     except IntegrityError:
         res = jsonify({"message": "Correo ya registrado"})
+        res.status_code = 401
         return res
+
+
+@usuario_bp.route("/profile", methods=["GET"])
+@jwt_required()
+def perfil():
+    id_usuario = get_jwt_identity()
+    usuario = Usuario.query.get_or_404(id_usuario)
+    productos = Producto.query.filter_by(id_usuario=usuario.id).all()
+    productos_res = productos_schema.dump(productos)
+    res = usuario_schema.dump(usuario)
+    res["productos"] = productos_res
+    return jsonify(res)

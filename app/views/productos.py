@@ -90,7 +90,9 @@ def actualizarProducto(id):
     _usuario_id = get_jwt_identity()
     producto = Producto.query.get_or_404(id)
     usuario = Usuario.query.get_or_404(_usuario_id)
-    if not usuario.vendedor and producto not in usuario.productos:
+    print(producto not in usuario.productos)
+    print(producto.usuario.correo)
+    if (not usuario.vendedor) or (producto not in usuario.productos):
         res = jsonify({"message": "No se encontro el producto"})
         return res
     _json = request.form.to_dict()
@@ -195,7 +197,7 @@ def comprarProducto(id):
         db.session.commit()
 
         msg = Message(
-            "Compra", sender=usuario.correo, recipients=["cheo2090@gmail.com"]
+            "Compra", sender="support@mercado.en.linea.com", recipients=[usuario.correo]
         )
         msg.body = f"La compra fue realizada con exito {usuario.correo}"
         mail.send(msg)

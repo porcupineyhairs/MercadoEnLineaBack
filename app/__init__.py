@@ -16,6 +16,7 @@ from app.configs import (
     MAIL_PORT,
     MAIL_SERVER,
     MAIL_USERNAME,
+    MAIL_USE_SSL,
     MAIL_USE_TLS,
     SECRET_KEY,
     SQLALCHEMY_DATABASE_URI,
@@ -44,7 +45,8 @@ def create_app():
     app.config["MAIL_PORT"] = MAIL_PORT
     app.config["MAIL_USERNAME"] = MAIL_USERNAME
     app.config["MAIL_PASSWORD"] = MAIL_PASSWORD
-    app.config["MAIL_USE_TLS"] = MAIL_USE_TLS
+    app.config['MAIL_USE_TLS'] = False
+    app.config["MAIL_USE_SSL"] = True
 
     CORS(app)
 
