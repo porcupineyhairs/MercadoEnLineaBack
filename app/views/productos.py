@@ -31,7 +31,7 @@ def obtenerProductos():
     -------
     Response"""
 
-    productos = Producto.query.filter(Producto.vendido.is_(False)).all()
+    productos = Producto.query.all()
     res = jsonify(productos_schema.dump(productos))
     return res
 
@@ -65,11 +65,7 @@ def buscarProducto():
     Response"""
 
     busqueda = request.args["q"]
-    productos = (
-        Producto.query.filter(Producto.vendido.is_(False))
-        .msearch(busqueda, fields=["nombre"], limit=20)
-        .all()
-    )
+    productos = Producto.query.msearch(busqueda, fields=["nombre"], limit=20).all()
     res = productos_schema.dump(productos)
     return jsonify(res)
 
