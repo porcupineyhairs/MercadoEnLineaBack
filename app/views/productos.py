@@ -111,6 +111,8 @@ def actualizarProducto(id):
         _icono.save(ruta_icono)
         producto.icono = nuevo_nombre_icono
 
+    producto.vendido = False
+
     db.session.commit()
 
     return jsonify({"message": "Producto actualizado exitosamente"})
