@@ -17,5 +17,8 @@ def obtenerImage(filename):
     Returns
     -------
     Response"""
-    imagen = os.path.join(UPLOAD_FOLDER, filename)
-    return send_file(imagen)
+    try:
+        imagen = os.path.join(UPLOAD_FOLDER, filename)
+        return send_file(imagen)
+    except FileNotFoundError:
+        return send_file(os.path.join(UPLOAD_FOLDER, 'fff.png'))
